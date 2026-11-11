@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.2
+
+### Changed
+
+- Rule 5 covers engineering operations (a deploy, a release, a deployment procedure, infrastructure maintenance, an operational configuration change) when the goal and procedure are clear and no product or architecture decision remains. Rule 6 takes them when such a decision remains. Rules 3 and 4 no longer take operations that change a shared or production system.
+- The safety boundary covers every operation that needs authorization, not only destructive ones, and says it is independent of the route.
+- Credential rotation is split by real impact. Rotating with a tested replacement, an overlap period, and a recovery path is high impact but recoverable. Revoking a credential with no working replacement, or one that active services may still need with no recovery path, is destructive.
+- Selecting a route, approving a plan, and authorizing an operation are listed as three separate decisions. Investigation, review, planning, and preparation that do not change external or production state need no authorization.
+
+### Removed
+
+- The routing test suite (`tests/cases.json`, `tests/run.mjs`) and the generated `tests/RESULTS.md`. Checks are now the lightweight ones in `AGENTS.md`. The skill's reporting rules are unchanged.
+
 ## 0.2.1
 
 ### Added

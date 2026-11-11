@@ -79,7 +79,7 @@ If an assumption decided the route, a second line says so:
 Assumes: the export format is already agreed in the ticket
 ```
 
-If the task includes a destructive operation, another line says so:
+If the task includes an operation that needs your authorization, another line says so:
 
 ```
 Authorization: required before dropping the legacy_orders table
@@ -89,15 +89,17 @@ If you disagree, name the route you want and the agent switches. Requests that a
 
 ## Safety boundary
 
-Before routing, `bb-kickoff` checks whether the task includes a destructive operation. This holds on every route, including one you named.
+Before routing, `bb-kickoff` checks whether the task includes an operation that needs your authorization. That covers high-impact operations, not only destructive ones. The check holds on every route, including one you named, and it does not change which route is picked.
 
 | Operation | Examples | What happens |
 |---|---|---|
 | Low risk or reversible | Local code, local config | Nothing extra |
-| High impact, recoverable | A production deploy, an infrastructure change, rotating a credential | Normal routing. Authorization required, unless you asked for this exact operation and a tested rollback is known |
-| Destructive or irreversible | Permanently deleting data, a destructive migration, destroying infrastructure, rewriting shared Git history, revoking a live credential | Authorization required |
+| High impact, recoverable | A production deploy, a release, an infrastructure change, an operational config change, rotating a credential with a tested replacement and an overlap period | Normal routing. Authorization required, unless you asked for this exact operation and a tested rollback is known |
+| Destructive or irreversible | Permanently deleting data, a destructive migration, destroying infrastructure, rewriting shared Git history, revoking a live credential with no working replacement or no way to recover access | Authorization required |
 
-When authorization is required, the agent still investigates, plans, and prepares. Right before the operation runs, it shows you the exact command and target and waits for your yes. Your request, the route, and an approved plan do not count as that yes.
+The agent judges an operation by what it would actually break and whether it can be undone, not by its name. A credential rotation is recoverable when the new credential is tested and services switch over before the old one stops working. Revoking a credential that something still needs, with no way back, is destructive.
+
+Picking a route, approving a plan, and authorizing an operation are three separate decisions. When authorization is required, the agent still investigates, reviews, plans, and prepares, as long as none of that changes a shared or production system. Right before the operation runs, it shows you the exact command and target and waits for your yes. Your request, the route, and an approved plan do not count as that yes.
 
 ## Rules
 
@@ -108,9 +110,9 @@ When authorization is required, the agent still investigates, plans, and prepare
 | 1 | You asked for `direct`, `brainstorming`, or `poteto-mode` by name. The safety boundary still applies | the one you asked for |
 | 2 | A destructive or irreversible operation on a shared or production system, as the safety boundary defines it | `brainstorming` |
 | 3 | A one-file change with an obvious fix, a docs or config edit that changes no behavior, or a question of fact the agent can answer by reading, including how existing code works | `direct` |
-| 4 | The result is not code. Having a git repository or not does not decide the route | `brainstorming` for something new, `direct` for a fix or change to something that exists |
-| 5 | A bug, a slowdown, a refactor, an investigation you asked for, pull request upkeep, picking up work from another session, or a task to run unattended | `poteto-mode` |
-| 6 | New or changed behavior, and you still have to decide who it is for, how far it goes, what done means, or which of two conflicting requirements wins | `brainstorming` |
+| 4 | The result is not code. Having a git repository or not does not decide the route. An operation on a running system does not count here | `brainstorming` for something new, `direct` for a fix or change to something that exists |
+| 5 | A bug, a slowdown, a refactor, an investigation you asked for, pull request upkeep, picking up work from another session, a task to run unattended, or an engineering operation such as a deploy or a release whose goal and procedure are clear | `poteto-mode` |
+| 6 | New or changed behavior, or an engineering operation, and you still have to decide who it is for, how far it goes, what done means, which of two conflicting requirements wins, or a product or architecture choice | `brainstorming` |
 | 7 | New or changed behavior with nothing left for you to decide, including questions the agent can answer by running or measuring something | `poteto-mode` |
 
 Rule 3 is judged from the request alone. It does not apply when:
@@ -119,7 +121,10 @@ Rule 3 is judged from the request alone. It does not apply when:
 - the change is a security fix,
 - answering means running or measuring something, as in "is cache A or B faster?",
 - you ask for an investigation or ask whether something is certain, as in "are we sure this handles expired tokens?",
-- the question is about what should be built, as in "what should the dashboard show?". That is a decision for you.
+- the question is about what should be built, as in "what should the dashboard show?". That is a decision for you,
+- the task changes a shared or production system.
+
+A deploy or release does not go to `brainstorming` just because it touches production. Routing it to `poteto-mode` lets the agent prepare. It does not let the agent run it. The safety boundary decides that.
 
 Engineering choices, such as which library, how to structure the code, or what to name things, are the agent's to make. Only product choices and conflicts count as decisions for you in rule 6.
 
@@ -145,6 +150,7 @@ When nothing fits, the agent says why and asks you one question, such as making 
 | "Build a notification system" | `brainstorming` | 6 |
 | "Change the default currency shown to all users" | `brainstorming` | 6 |
 | "Build the notification system exactly as specified in docs/notifications-spec.md" | `poteto-mode` | 7 |
+| "Deploy the tagged release v1.4 to production with the documented release script" | `poteto-mode`, authorization required before the deploy | 5 |
 | "Drop the legacy_orders table from the production database" | `brainstorming` | 2 |
 | "Use poteto-mode to fix the typo in README.md" | `poteto-mode` | 1 |
 
@@ -180,27 +186,19 @@ Cursor reads `AGENTS.md`. For Claude Code, add `@AGENTS.md` to the project's `CL
 
 ## Agent compatibility
 
-| Agent | Finds the skill | Routes correctly | Starts `poteto-mode` itself | Tested |
-|---|---|---|---|---|
-| Claude Code | Yes, from `.claude/skills/` | Covered by `node tests/run.mjs` | Yes with `pstack-claude`. No with the skills CLI copy, so you type `/poteto-mode` | Automated |
-| Cursor | Yes, from `.agents/skills/` | Yes for the 0.1 rules | No, the Cursor plugin marks it for you to start | By hand, 0.1 rules only |
-| Codex | Not tested | Not tested | Not tested | No |
+| Agent | Finds the skill | Starts `poteto-mode` itself | Routing last checked |
+|---|---|---|---|
+| Claude Code | Yes, from `.claude/skills/` | Yes with `pstack-claude`. No with the skills CLI copy, so you type `/poteto-mode` | 0.2.0 rules, automated runs |
+| Cursor | Yes, from `.agents/skills/` | No, the Cursor plugin marks it for you to start | 0.1 rules, by hand |
+| Codex | Not tested | Not tested | Not tested |
 
-## Testing
-
-```bash
-node tests/run.mjs
-```
-
-The script builds throwaway projects in your temp folder and installs this repository into them. Most get superpowers and the Claude Code build of pstack. One gets the skills CLI copy of pstack, to test the case where only you can start `poteto-mode`, and one gets neither, to test missing skills. It then sends every case in [tests/cases.json](tests/cases.json) to `claude -p` three times. A case passes only when all three runs pick the expected route. Results go to `tests/RESULTS.md` on your machine. That file is not committed.
-
-You need Claude Code signed in. A full run makes about 150 model calls and takes several minutes. Use `--runs 1` for a quick check, or `--only S01,M01` for a few cases. The script disables the superpowers and pstack plugins for its own calls, so every machine tests the same copies.
+The rules changed in 0.2.1 and 0.2.2 have not been rechecked on either agent.
 
 ## Limitations
 
-- The agent's choice comes from a language model, so the same request can be routed differently on different runs. The test suite measures how often that happens. It cannot rule it out.
+- The agent's choice comes from a language model, so the same request can be routed differently on different runs.
 - Nothing forces an agent to call `bb-kickoff`. The `AGENTS.md` line makes it likely, not certain.
-- The tests check the `Route:` line. They do not check what the target skill does after the handoff.
+- This repository has no automated routing tests.
 - The rules were written against superpowers and pstack as of November 2026. If either changes how it works, the rules may need updating.
 - The install commands for Claude Code and Cursor plugins were checked against installed copies, not run on a clean machine.
 
@@ -210,7 +208,7 @@ You need Claude Code signed in. A full run makes about 150 model calls and takes
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) first. Change a rule in `skills/bb-kickoff/SKILL.md` and this README together, add or update a case in `tests/cases.json`, and run the tests before you open a pull request.
+Read [AGENTS.md](AGENTS.md) first. Change a rule in `skills/bb-kickoff/SKILL.md` and this README together, and run the checks listed in `AGENTS.md` before you open a pull request.
 
 ## Version history
 
