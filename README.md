@@ -149,6 +149,7 @@ When nothing fits, the agent says why and asks you one question, such as making 
 | Request | Route | Rule |
 |---|---|---|
 | "Fix the typo in README.md" | `direct` | 3 |
+| "Fix the off-by-one bug on line 42 of src/page.ts by changing `<` to `<=`" | `direct` | 3 |
 | "How does the login flow work in this repo?" | `direct` | 3 |
 | "Rename the local variable tmp to retryCount in src/net/retry.ts" | `direct` | 3 |
 | "The app crashes when I log in" | `poteto-mode` | 5 |
@@ -165,7 +166,7 @@ When nothing fits, the agent says why and asks you one question, such as making 
 
 ## Several tasks in one request
 
-Each task gets its own `Route:` line, and the agent works through them in the order you gave.
+Each task gets its own `Route:` line, with any `Assumes:` or `Authorization:` line right under it, and the agent works through them in the order you gave.
 
 ```
 Fix the typo in README.md, then find out why search is slow, then add a notification system
@@ -181,14 +182,14 @@ Before it starts a later task, the agent checks whether an earlier one changed w
 
 ## After brainstorming
 
-`brainstorming` ends with a written plan that you approve. If that plan touches more than one file, or has to be checked against the running system, `bb-kickoff` tells the agent to build it through `poteto-mode`. Smaller plans are built the way the plan itself proposes.
+`brainstorming` ends with a written plan that you approve. If that plan touches more than one file, or has to be checked against the running system, `bb-kickoff` tells the agent to build it through `poteto-mode`. When `poteto-mode` can only be started by you, the agent gives you the `/poteto-mode` command with the approved plan's file path. Smaller plans are built the way the plan itself proposes.
 
 ## Make agents call bb-kickoff
 
-An agent will not always call `bb-kickoff` by itself. To make it the first step, add this line to the `AGENTS.md` of each project:
+An agent will not always call `bb-kickoff` by itself, and other installed skills may try to run first. To make `bb-kickoff` the first step, add this line to the `AGENTS.md` of each project:
 
 ```
-Before starting any development task, invoke the bb-kickoff skill and follow its route.
+Before starting any development task, invoke the bb-kickoff skill first, before any other skill, and follow its route.
 ```
 
 Cursor reads `AGENTS.md`. For Claude Code, add `@AGENTS.md` to the project's `CLAUDE.md`.
@@ -197,8 +198,8 @@ Cursor reads `AGENTS.md`. For Claude Code, add `@AGENTS.md` to the project's `CL
 
 | Agent | Installs with the skills CLI | Finds the skill | Routing inspected | Full workflow verified |
 |---|---|---|---|---|
-| Claude Code | Yes | Yes, from `.claude/skills/` | 0.2.4 rules, by hand | Yes, on real tasks |
-| Cursor | Yes | Yes, from `.agents/skills/` | 0.2.4 rules, by hand | Yes, on real tasks |
+| Claude Code | Yes | Yes, from `.claude/skills/` | 0.2.5 rules, by hand | Yes, on real tasks |
+| Cursor | Yes | Yes, from `.agents/skills/` | 0.2.5 rules, by hand | Yes, on real tasks |
 | Codex | Not tested | Not tested | Not tested | Not tested |
 
 The maintainer checked Claude Code and Cursor by hand. "Full workflow verified" means a task was followed from the `Route:` line through the target skill to its final report.

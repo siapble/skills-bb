@@ -2,7 +2,7 @@
 name: bb-kickoff
 description: Use when starting any development task, before writing code or asking clarifying questions, to decide whether the work should go through brainstorming, poteto-mode, or be done directly.
 metadata:
-  version: 0.2.4
+  version: 0.2.5
 ---
 
 # Kickoff
@@ -76,6 +76,7 @@ When no route fits, say why in one sentence, ask one question (for example, make
 
 | Request | Route | Authorization |
 |---|---|---|
+| "Fix the off-by-one bug on line 42 of src/page.ts by changing `<` to `<=`" | `direct` (rule 3) | Not required |
 | "Use direct to drop the production orders table" | `direct` (rule 1) | Required: destructive |
 | "Deploy v1.4 to production with the release script" | `poteto-mode` (rule 5) | Required, unless you have checked that a tested rollback in the repository fits this deploy |
 | "Rotate the payment API key: create the new one, test it, switch services, then retire the old one" | `poteto-mode` (rule 5) | Required, unless the overlap and the recovery path are confirmed from the repository |
@@ -92,7 +93,7 @@ In every row, investigating and preparing go ahead before authorization.
 
    `Route: <target> (rule <n>) because <reason>`
 
-   `<target>` is exactly `brainstorming`, `poteto-mode`, or `direct`, with no plugin prefix even when the installed skill has one. `<n>` is the rule that matched. Write `<reason>` in one sentence in the user's language, about this task and not a restatement of the rule. If an assumption decided the route, add one more line, `Assumes: <assumption>`. If the safety boundary requires authorization, add `Authorization: required before <operation>`. The user may overrule the route.
+   `<target>` is exactly `brainstorming`, `poteto-mode`, or `direct`, with no plugin prefix even when the installed skill has one. `<n>` is the rule that matched. If an assumption decided the route, add `Assumes: <assumption>` on the next line. If the safety boundary requires authorization, add `Authorization: required before <operation>` on the next line, after `Assumes:` if there is one. When there are several tasks, keep each task's `Assumes:` and `Authorization:` lines right under its `Route:` line. Write `<reason>` in one sentence about this task, not a restatement of the rule, and write `<reason>`, `<assumption>`, and `<operation>` in the user's language. The user may overrule the route.
 4. Unless the route is `direct`, find the target skill (see below). If it is missing, follow "When the target skill is missing".
 5. Invoke the target skill and follow it. For `direct`, do the work. Finish with the report described under Reporting.
 
@@ -124,7 +125,7 @@ Look through the skills available in this session for one named `brainstorming` 
 
 The `Route:` line is already printed, and the route stays as it is. Say which skill is missing, show the matching install command, say in one sentence why the task is not done on the `direct` route instead, and stop. Do not do that skill's job yourself, do not run the install command, and never say the skill ran. If another installed skill could do the job, you may name it as an option the user can choose. Do not choose it for them.
 
-Some installs hide a skill so that only the user can start it (the pstack copies for Cursor and for the skills CLI do this with `poteto-mode`), and you cannot tell that from a missing skill. So always add: if the skill is already installed, type `/<skill>` followed by the request, for example `/poteto-mode The save button crashes when clicked`.
+Some installs hide a skill so that only the user can start it (the pstack copies for Cursor and for the skills CLI do this with `poteto-mode`), and you cannot tell that from a missing skill. So always add: if the skill is already installed, type `/<skill>` followed by the request, for example `/poteto-mode The save button crashes when clicked`. When this happens after `brainstorming`, put the approved plan's path in that command, for example `/poteto-mode Implement the approved plan in <plan-path>`.
 
 | Agent | superpowers (`brainstorming`) | pstack (`poteto-mode`) |
 |---|---|---|

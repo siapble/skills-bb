@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.5
+
+### Changed
+
+- The `AGENTS.md` snippet in the README tells the agent to invoke `bb-kickoff` first, before any other skill, when a development task starts, so session hooks from other skill packs do not bypass routing.
+- When `poteto-mode` is missing or hidden after `brainstorming`, the suggested `/poteto-mode` command includes the path to the approved plan.
+- `Assumes:` and `Authorization:` lines are written in the user's language, like the `Route:` reason, and stay directly under the `Route:` line of the task they belong to.
+- An example in `SKILL.md` and `README.md` shows that a bug fix whose file and fix are already named in the request goes to `direct` under rule 3.
+- The README compatibility table records manual checks of 0.2.5 on Claude Code and Cursor.
+
 ## 0.2.4
 
 ### Changed

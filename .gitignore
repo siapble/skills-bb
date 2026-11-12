@@ -1,4 +1,6 @@
 node_modules/
+.claude/
+.agents/
 .superpowers/
 docs/superpowers/
 docs/skills-sh.md
