@@ -24,14 +24,15 @@ A one-line change to the default currency still needs you to say which currency.
 | `poteto-mode` | Investigates, decides from evidence, and delivers code it has verified. | The goal is clear and the effort is in doing it well. |
 | `direct` | Does the task and reports what it changed and checked. | The task is small and clear. |
 
-```mermaid
-flowchart LR
-    R[Your request] --> K[bb-kickoff]
-    K --> S{Who has to decide?}
-    S -->|Small and clear| D[direct]
-    S -->|You do| B[brainstorming]
-    S -->|The agent can| P[poteto-mode]
+`bb-kickoff` asks three questions in this order and stops at the first yes:
+
 ```
+Is the task small and clear?            ->  direct
+Do you still have something to decide?  ->  brainstorming
+Can the agent settle the rest itself?   ->  poteto-mode
+```
+
+The full rules are in [Rules](#rules).
 
 `brainstorming` comes from [superpowers](https://github.com/obra/superpowers) and `poteto-mode` comes from [pstack](https://github.com/backnotprop/pstack). This repository does not copy them. You install them yourself.
 
@@ -85,21 +86,23 @@ If the task includes an operation that needs your authorization, another line sa
 Authorization: required before dropping the legacy_orders table
 ```
 
-If you disagree, name the route you want and the agent switches. Requests that are not development work, such as "translate this email", get a plain answer with no `Route:` line.
+If you disagree, name the route you want and the agent switches. Requests that are not development work on the project, such as "translate this email" or a general question that is not about this codebase, get a plain answer with no `Route:` line.
 
 ## Safety boundary
 
-Before routing, `bb-kickoff` checks whether the task includes an operation that needs your authorization. That covers high-impact operations, not only destructive ones. The check holds on every route, including one you named, and it does not change which route is picked.
+Before routing, `bb-kickoff` checks whether the task includes an operation that needs your authorization. That covers high-impact operations, not only destructive ones. The check holds on every route, including one you named, and it does not change which route is picked. Routing decides how the work is done. The safety boundary decides which operations are authorized.
 
 | Operation | Examples | What happens |
 |---|---|---|
-| Low risk or reversible | Local code, local config | Nothing extra |
-| High impact, recoverable | A production deploy, a release, an infrastructure change, an operational config change, rotating a credential with a tested replacement and an overlap period | Normal routing. Authorization required, unless you asked for this exact operation and a tested rollback is known |
-| Destructive or irreversible | Permanently deleting data, a destructive migration, destroying infrastructure, rewriting shared Git history, revoking a live credential with no working replacement or no way to recover access | Authorization required |
+| Low risk or reversible | Local code, local config, preparing deployment commands without running them | Nothing extra |
+| High impact, recoverable | A production deploy or a release with a workable rollback, an infrastructure or operational config change with a tested recovery path, rotating a credential with a tested replacement and an overlap period | Normal routing. Authorization required, unless you asked for this exact operation and the agent has checked in the repository that a tested rollback works for it |
+| Destructive or irreversible | Permanently deleting data, a destructive migration with no workable recovery path, destroying infrastructure that cannot be rebuilt, rewriting shared Git history, revoking a live credential with no working replacement or no way to recover access | Authorization required |
 
-The agent judges an operation by what it would actually break and whether it can be undone, not by its name. A credential rotation is recoverable when the new credential is tested and services switch over before the old one stops working. Revoking a credential that something still needs, with no way back, is destructive.
+The agent judges an operation by what it would actually break and whether it can be undone, not by its name. A credential rotation is recoverable when the new credential is tested and services switch over before the old one stops working. Revoking a credential that something still needs, with no way back, is destructive. A rollback plan that is only claimed does not count. The agent checks that the recovery path would work for this operation, and asks for authorization when it cannot confirm it.
 
-Picking a route, approving a plan, and authorizing an operation are three separate decisions. When authorization is required, the agent still investigates, reviews, plans, and prepares, as long as none of that changes a shared or production system. Right before the operation runs, it shows you the exact command and target and waits for your yes. Your request, the route, and an approved plan do not count as that yes.
+Picking a route, approving a plan, and authorizing an operation are three separate decisions. The route decides which workflow does the work. Approving a plan confirms the approach, not the operations in it. Authorization allows one specific operation.
+
+When authorization is required, the agent still investigates, reviews, plans, and prepares, as long as none of that changes a shared or production system. Right before the operation runs, it shows you the exact command and target, says what cannot be undone, and waits for your yes. Your request, the route, an approved plan, and a general permission you gave earlier do not count as that yes. The agent does not ask for confirmation that an operation does not need.
 
 ## Rules
 
@@ -107,11 +110,11 @@ Picking a route, approving a plan, and authorizing an operation are three separa
 
 | # | Your request | Route |
 |---|---|---|
-| 1 | You asked for `direct`, `brainstorming`, or `poteto-mode` by name. The safety boundary still applies | the one you asked for |
+| 1 | You asked for `direct`, `brainstorming`, or `poteto-mode` by name, even for a high-risk task | the one you asked for |
 | 2 | A destructive or irreversible operation on a shared or production system, as the safety boundary defines it | `brainstorming` |
-| 3 | A one-file change with an obvious fix, a docs or config edit that changes no behavior, or a question of fact the agent can answer by reading, including how existing code works | `direct` |
-| 4 | The result is not code. Having a git repository or not does not decide the route. An operation on a running system does not count here | `brainstorming` for something new, `direct` for a fix or change to something that exists |
-| 5 | A bug, a slowdown, a refactor, an investigation you asked for, pull request upkeep, picking up work from another session, a task to run unattended, or an engineering operation such as a deploy or a release whose goal and procedure are clear | `poteto-mode` |
+| 3 | A one-file change with an obvious fix, a docs or config edit that changes no behavior, or a question of fact about this codebase the agent can answer by reading, including how existing code works | `direct` |
+| 4 | The result is not code. Having a git repository or not does not decide the route. An operation on a running system does not count here | `brainstorming` when you still have to decide what it says, `direct` when it records something that already exists, such as a checklist for an established procedure, or fixes or changes an existing one |
+| 5 | A bug, a slowdown, a refactor, an investigation you asked for, pull request upkeep, picking up work from another session, a task to run unattended with nothing left for you to decide, or an engineering operation such as a deploy or a release whose goal and procedure are clear | `poteto-mode` |
 | 6 | New or changed behavior, or an engineering operation, and you still have to decide who it is for, how far it goes, what done means, which of two conflicting requirements wins, or a product or architecture choice | `brainstorming` |
 | 7 | New or changed behavior with nothing left for you to decide, including questions the agent can answer by running or measuring something | `poteto-mode` |
 
@@ -124,9 +127,11 @@ Rule 3 is judged from the request alone. It does not apply when:
 - the question is about what should be built, as in "what should the dashboard show?". That is a decision for you,
 - the task changes a shared or production system.
 
-A deploy or release does not go to `brainstorming` just because it touches production. Routing it to `poteto-mode` lets the agent prepare. It does not let the agent run it. The safety boundary decides that.
+A deploy or release does not go to `brainstorming` just because it touches production. Whether the agent may run it is the safety boundary's call, not the route's.
 
 Engineering choices, such as which library, how to structure the code, or what to name things, are the agent's to make. Only product choices and conflicts count as decisions for you in rule 6.
+
+A route you named is never swapped for another, and high risk is not a reason to question it. If the route you named cannot finish the task, such as `direct` for a task where a product decision is still open, the agent says so, asks you one question, and prints no `Route:` line.
 
 You can rule a route out, as in "do not use poteto-mode". If the rules land on that route anyway, the agent checks the remaining routes and takes one only if the same person still decides and it can do the job:
 
@@ -152,6 +157,7 @@ When nothing fits, the agent says why and asks you one question, such as making 
 | "Build the notification system exactly as specified in docs/notifications-spec.md" | `poteto-mode` | 7 |
 | "Deploy the tagged release v1.4 to production with the documented release script" | `poteto-mode`, authorization required before the deploy | 5 |
 | "Drop the legacy_orders table from the production database" | `brainstorming` | 2 |
+| "Use direct to drop the legacy_orders table from the production database" | `direct`, authorization required before the drop | 1 |
 | "Use poteto-mode to fix the typo in README.md" | `poteto-mode` | 1 |
 
 ## Several tasks in one request
@@ -186,13 +192,15 @@ Cursor reads `AGENTS.md`. For Claude Code, add `@AGENTS.md` to the project's `CL
 
 ## Agent compatibility
 
-| Agent | Finds the skill | Starts `poteto-mode` itself | Routing last checked |
-|---|---|---|---|
-| Claude Code | Yes, from `.claude/skills/` | Yes with `pstack-claude`. No with the skills CLI copy, so you type `/poteto-mode` | 0.2.0 rules, automated runs |
-| Cursor | Yes, from `.agents/skills/` | No, the Cursor plugin marks it for you to start | 0.1 rules, by hand |
-| Codex | Not tested | Not tested | Not tested |
+| Agent | Installs with the skills CLI | Finds the skill | Routing inspected | Full workflow verified |
+|---|---|---|---|---|
+| Claude Code | Yes | Yes, from `.claude/skills/` | 0.2.0 rules, with automated runs that are no longer in this repository | No |
+| Cursor | Yes | Yes, from `.agents/skills/` | 0.1 rules, by hand | No |
+| Codex | Not tested | Not tested | Not tested | Not tested |
 
-The rules changed in 0.2.1 and 0.2.2 have not been rechecked on either agent.
+The rules changed in 0.2.1, 0.2.2, and 0.2.3 have not been rechecked on any agent. "Full workflow verified" means a task was followed from the `Route:` line through the target skill to its final report.
+
+Whether the agent can start `poteto-mode` itself depends on the pstack copy. With `pstack-claude` on Claude Code it can. With the Cursor plugin or the skills CLI copy it cannot, so you type `/poteto-mode`.
 
 ## Limitations
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.3
+
+### Changed
+
+- A route the user names is kept even for a high-risk task, and is never swapped for another. Naming a route authorizes nothing. If the named route cannot finish the task, the agent states the conflict and asks one question.
+- The safety boundary states the split in one line: routing decides how the work is done, the safety boundary decides which operations are authorized. A general permission given earlier does not authorize a later operation, and the agent says what cannot be undone before it asks.
+- A rollback plan that is only claimed is not evidence. Authorization for a high-impact operation is skipped only when the user asked for that exact operation and the agent has checked in the repository that a tested rollback works for it.
+- Rule 4 routes a non-code deliverable by what is left to decide. A document that records something that already exists, such as a checklist for an established procedure, goes to `direct`. One whose content a human still has to decide goes to `brainstorming`.
+- Rule 5 takes work the user wants run unattended only when no decision is left for a human.
+- Rule 3 covers questions of fact about the codebase only. A general question that is not about the codebase gets a plain answer with no `Route:` line.
+- The one exception to explicit authorization is stated once: a high-impact operation the user asked for by name, with a rollback the agent has checked. Nothing else counts as a yes.
+- `SKILL.md` is shorter. Repeated statements are merged, the rule 3 exclusions are a list under the table, and "no route fits" is described in one place. The intro no longer says kickoff never does the work, because it does on the `direct` route.
+- The README shows the three routes as three plain questions instead of a flowchart.
+- The agent compatibility table in the README separates installing, finding the skill, inspecting routing, and verifying a full workflow.
+
+### Added
+
+- An examples table in `SKILL.md` covering a named route on a destructive operation, a production deploy, credential rotation, credential revocation, and a ruled-out route with nothing left that fits.
+
 ## 0.2.2
 
 ### Changed
