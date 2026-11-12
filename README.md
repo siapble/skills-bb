@@ -58,7 +58,7 @@ The Claude Code command for pstack installs `michael-denyer/pstack-claude`, a th
 
 The Cursor plugin and the skills CLI copy of pstack mark `poteto-mode` so that only you can start it. The agent cannot see a skill marked this way, so it reports `poteto-mode` as missing. Its message also tells you that, if pstack is already installed, you can type `/poteto-mode` followed by your request.
 
-If one of the two is missing, `bb-kickoff` tells you which one, shows the command from this table, and stops. It does not install anything, and it does not do the missing skill's job itself. It may name a skill you already have that could do the job instead, and leave the choice to you.
+If one of the two is missing, `bb-kickoff` still prints the route it picked. Then it tells you which skill is missing, shows the command from this table, says why it did not just do the task directly, and stops. It does not install anything, and it does not do the missing skill's job itself. It may name a skill you already have that could do the job instead, and leave the choice to you.
 
 ## What you see
 
@@ -68,7 +68,7 @@ You ask for something:
 The save button crashes when clicked
 ```
 
-The agent answers with one line and then starts that route:
+The agent answers with one line and then starts that route. The reason is about your task, not a restatement of the rule:
 
 ```
 Route: poteto-mode (rule 5) because this is a bug and its cause is not known yet
@@ -125,7 +125,10 @@ Rule 3 is judged from the request alone. It does not apply when:
 - answering means running or measuring something, as in "is cache A or B faster?",
 - you ask for an investigation or ask whether something is certain, as in "are we sure this handles expired tokens?",
 - the question is about what should be built, as in "what should the dashboard show?". That is a decision for you,
+- the task works on credentials or secrets, changes permissions or access, or works on real customer or personal data,
 - the task changes a shared or production system.
+
+Editing a document that only mentions these subjects is still `direct`.
 
 A deploy or release does not go to `brainstorming` just because it touches production. Whether the agent may run it is the safety boundary's call, not the route's.
 
@@ -194,11 +197,11 @@ Cursor reads `AGENTS.md`. For Claude Code, add `@AGENTS.md` to the project's `CL
 
 | Agent | Installs with the skills CLI | Finds the skill | Routing inspected | Full workflow verified |
 |---|---|---|---|---|
-| Claude Code | Yes | Yes, from `.claude/skills/` | 0.2.0 rules, with automated runs that are no longer in this repository | No |
-| Cursor | Yes | Yes, from `.agents/skills/` | 0.1 rules, by hand | No |
+| Claude Code | Yes | Yes, from `.claude/skills/` | 0.2.4 rules, by hand | Yes, on real tasks |
+| Cursor | Yes | Yes, from `.agents/skills/` | 0.2.4 rules, by hand | Yes, on real tasks |
 | Codex | Not tested | Not tested | Not tested | Not tested |
 
-The rules changed in 0.2.1, 0.2.2, and 0.2.3 have not been rechecked on any agent. "Full workflow verified" means a task was followed from the `Route:` line through the target skill to its final report.
+The maintainer checked Claude Code and Cursor by hand. "Full workflow verified" means a task was followed from the `Route:` line through the target skill to its final report.
 
 Whether the agent can start `poteto-mode` itself depends on the pstack copy. With `pstack-claude` on Claude Code it can. With the Cursor plugin or the skills CLI copy it cannot, so you type `/poteto-mode`.
 

@@ -2,7 +2,7 @@
 name: bb-kickoff
 description: Use when starting any development task, before writing code or asking clarifying questions, to decide whether the work should go through brainstorming, poteto-mode, or be done directly.
 metadata:
-  version: 0.2.3
+  version: 0.2.4
 ---
 
 # Kickoff
@@ -53,7 +53,10 @@ Rule 3 does not match:
 - for a question that needs running or measuring something,
 - when the user asks for an investigation or asks whether something is certain,
 - for a question about what should be built, which is a decision,
+- for an operation on credentials or secrets, a change to permissions or access, or an operation on real customer or personal data,
 - for an operation that changes a shared or production system.
+
+Editing documentation that only mentions these subjects still matches.
 
 Engineering choices (which library, how to structure the code, naming, test layout) are not decisions for the human. Only product choices, conflicting requirements, and changes that cannot be undone are.
 
@@ -85,12 +88,12 @@ In every row, investigating and preparing go ahead before authorization.
 
 1. If the request contains more than one task, split it and route each task separately, one `Route:` line per task, in the order the user gave them.
 2. Apply the safety boundary, then the routing rules, to the request and the context you already have.
-3. Unless the route is `direct`, find the target skill (see below).
-4. Announce the route on its own line, in exactly this form:
+3. Announce the route on its own line, in exactly this form:
 
    `Route: <target> (rule <n>) because <reason>`
 
-   `<target>` is exactly `brainstorming`, `poteto-mode`, or `direct`, with no plugin prefix even when the installed skill has one. `<n>` is the rule that matched. Write `<reason>` in one sentence in the user's language. If an assumption decided the route, add one more line, `Assumes: <assumption>`. If the safety boundary requires authorization, add `Authorization: required before <operation>`. The user may overrule the route.
+   `<target>` is exactly `brainstorming`, `poteto-mode`, or `direct`, with no plugin prefix even when the installed skill has one. `<n>` is the rule that matched. Write `<reason>` in one sentence in the user's language, about this task and not a restatement of the rule. If an assumption decided the route, add one more line, `Assumes: <assumption>`. If the safety boundary requires authorization, add `Authorization: required before <operation>`. The user may overrule the route.
+4. Unless the route is `direct`, find the target skill (see below). If it is missing, follow "When the target skill is missing".
 5. Invoke the target skill and follow it. For `direct`, do the work. Finish with the report described under Reporting.
 
 ## Several tasks
@@ -119,7 +122,7 @@ Look through the skills available in this session for one named `brainstorming` 
 
 ## When the target skill is missing
 
-Say which skill is missing, show the matching install command, and stop. Do not do that skill's job yourself, do not run the install command, and never say the skill ran. If another installed skill could do the job, you may name it as an option the user can choose. Do not choose it for them.
+The `Route:` line is already printed, and the route stays as it is. Say which skill is missing, show the matching install command, say in one sentence why the task is not done on the `direct` route instead, and stop. Do not do that skill's job yourself, do not run the install command, and never say the skill ran. If another installed skill could do the job, you may name it as an option the user can choose. Do not choose it for them.
 
 Some installs hide a skill so that only the user can start it (the pstack copies for Cursor and for the skills CLI do this with `poteto-mode`), and you cannot tell that from a missing skill. So always add: if the skill is already installed, type `/<skill>` followed by the request, for example `/poteto-mode The save button crashes when clicked`.
 

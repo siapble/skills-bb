@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4
+
+### Changed
+
+- Rule 3 (`direct`) no longer takes operations on credentials or secrets, changes to permissions or access, or operations on real customer or personal data. Editing documentation that only mentions these subjects is still `direct`.
+- When the target skill is missing, the `Route:` line is printed first and the route is kept. The message then names the missing skill, shows the install command, and says in one sentence why the task is not done on the `direct` route instead.
+- The reason in the `Route:` line must be about the task, not a restatement of the rule.
+- The README compatibility table records manual checks of routing and the full workflow on Claude Code and Cursor.
+
 ## 0.2.3
 
 ### Changed
