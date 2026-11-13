@@ -96,7 +96,7 @@ Before routing, `bb-kickoff` checks whether the task includes an operation that 
 |---|---|---|
 | Low risk or reversible | Local code, local config, preparing deployment commands without running them | Nothing extra |
 | High impact, recoverable | A production deploy or a release with a workable rollback, an infrastructure or operational config change with a tested recovery path, rotating a credential with a tested replacement and an overlap period | Normal routing. Authorization required, unless you asked for this exact operation and the agent has checked in the repository that a tested rollback works for it |
-| Destructive or irreversible | Permanently deleting data, a destructive migration with no workable recovery path, destroying infrastructure that cannot be rebuilt, rewriting shared Git history, revoking a live credential with no working replacement or no way to recover access | Authorization required |
+| Destructive or irreversible | Permanently deleting data, a destructive migration with no workable recovery path, destroying infrastructure that cannot be rebuilt, rewriting shared Git history, revoking a live credential or access that an active service still needs, with no working replacement or recovery path | Authorization required |
 
 The agent judges an operation by what it would actually break and whether it can be undone, not by its name. A credential rotation is recoverable when the new credential is tested and services switch over before the old one stops working. Revoking a credential that something still needs, with no way back, is destructive. A rollback plan that is only claimed does not count. The agent checks that the recovery path would work for this operation, and asks for authorization when it cannot confirm it.
 
@@ -130,6 +130,10 @@ Rule 3 is judged from the request alone. It does not apply when:
 
 Editing a document that only mentions these subjects is still `direct`.
 
+A bug is `direct` under rule 3 only when its location is known and the fix is obvious from the request. Otherwise, it belongs to rule 5.
+
+A document describing an engineering operation is a non-code deliverable under rule 4. Performing or automating that operation belongs to rule 5 or 6.
+
 A deploy or release does not go to `brainstorming` just because it touches production. Whether the agent may run it is the safety boundary's call, not the route's.
 
 Engineering choices, such as which library, how to structure the code, or what to name things, are the agent's to make. Only product choices and conflicts count as decisions for you in rule 6.
@@ -152,13 +156,15 @@ When nothing fits, the agent says why and asks you one question, such as making 
 | "Fix the off-by-one bug on line 42 of src/page.ts by changing `<` to `<=`" | `direct` | 3 |
 | "How does the login flow work in this repo?" | `direct` | 3 |
 | "Rename the local variable tmp to retryCount in src/net/retry.ts" | `direct` | 3 |
+| "Write a runbook for the deploy procedure we use" | `direct` | 4 |
+| "Write the billing export spec; its content is still open" | `brainstorming` | 4 |
 | "The app crashes when I log in" | `poteto-mode` | 5 |
 | "This SQL query takes 40 seconds. Make it faster." | `poteto-mode` | 5 |
 | "Research whether we need Redis for session storage" | `poteto-mode` | 5 |
 | "Rename the package com.acme.old across all 300 files" | `poteto-mode` | 5 |
 | "Build a notification system" | `brainstorming` | 6 |
 | "Change the default currency shown to all users" | `brainstorming` | 6 |
-| "Build the notification system exactly as specified in docs/notifications-spec.md" | `poteto-mode` | 7 |
+| "Build the notification system exactly as the spec says" | `poteto-mode` | 7 |
 | "Deploy the tagged release v1.4 to production with the documented release script" | `poteto-mode`, authorization required before the deploy | 5 |
 | "Drop the legacy_orders table from the production database" | `brainstorming` | 2 |
 | "Use direct to drop the legacy_orders table from the production database" | `direct`, authorization required before the drop | 1 |

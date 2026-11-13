@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.6
+
+### Added
+
+- Examples for rules 4 and 7 in `SKILL.md`, covering an established process, an unresolved non-code deliverable, and implementation against an approved specification.
+
+### Changed
+
+- Clarified that a bug is `direct` under rule 3 only when its location is known and the fix is obvious from the request; otherwise it belongs to rule 5.
+- Clarified that a document describing an engineering operation is a non-code deliverable under rule 4, while performing or automating the operation belongs to rule 5 or 6.
+- Shortened repeated prose in `SKILL.md` without changing routing rules, safety boundaries, authorization requirements, handoff behavior, or reporting requirements.
+
 ## 0.2.5
 
 ### Changed
